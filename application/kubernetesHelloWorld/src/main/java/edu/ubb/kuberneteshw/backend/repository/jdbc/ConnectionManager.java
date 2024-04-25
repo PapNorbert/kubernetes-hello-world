@@ -1,6 +1,6 @@
 package edu.ubb.kuberneteshw.backend.repository.jdbc;
 
-import org.springframework.beans.factory.annotation.Value;
+import edu.ubb.kuberneteshw.backend.config.Configuration;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -11,26 +11,17 @@ import java.util.List;
 
 public class ConnectionManager {
     private static final Integer POOL_SIZE = 3;
-
     private static ConnectionManager instance;
     private final List<Connection> pool;
-    @Value("${DB_DRIVER}")
-    private final String DB_DRIVER = "com.mysql.jdbc.Driver";
-    @Value("${DB_URL}")
-    private final String DB_URL = "jdbc:mysql://localhost:3306/kubernetes?allowPublicKeyRetrieval=true&useSSL=false";
-    @Value("${DB_USER}")
-    private final String DB_USER = "kub";
-    @Value("${DB_PASSWORD}")
-
-    private final String DB_PASSWORD = "Kuber123";
 
     private ConnectionManager() {
         try {
             pool = new LinkedList<>();
-            Class.forName(DB_DRIVER);
+            Class.forName(Configuration.getDbDriver());
             for (int i = 0; i < 10; i++) {
                 pool.add(
-                        DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)
+                        DriverManager.getConnection(Configuration.getDbUrl(), Configuration.getDbUser(),
+                                Configuration.getDbPassword())
                 );
             }
         } catch (ClassNotFoundException | SQLException e) {
@@ -59,4 +50,6 @@ public class ConnectionManager {
         }
         return instance;
     }
+
+
 }

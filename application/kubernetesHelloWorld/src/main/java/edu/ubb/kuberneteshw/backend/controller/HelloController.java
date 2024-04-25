@@ -1,4 +1,4 @@
-package edu.ubb.kuberneteshw.backend.controller.exception;
+package edu.ubb.kuberneteshw.backend.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +13,6 @@ public class HelloController {
 
     @GetMapping()
     public String getMessage() {
-        return "Hello World! This is a demo application";
+        return "Hello World! This is a demo application version 1";
     }
 }
