@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pn-deployment
+  labels:
+    owner: pn
+    app: kubernetes-hw
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pn-kubernetes-hw
+  template:
+    metadata:
+      labels:
+        app: pn-kubernetes-hw
+    spec:
+      containers:
+        - name: kubernetes-hw-container
+          image: micpn.azurecr.io/kuberneteshw:v3
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DB_DRIVER
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: dbDriver
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: dbUrl
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: dbUser
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: dbPassword
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+      imagePullSecrets:
+        - name: registry-secret
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pn-service
+  labels:
+    owner: pn
+spec:
+  ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+  selector:
+    app: pn-kubernetes-hw
+
+---
+
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: deployment-autoscaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: pn-deployment
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 40
