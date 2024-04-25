@@ -1,0 +1,18 @@
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.4'
+}
+
+group = 'edu.ubb.kuberneteshw'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter:3.2.4'
+    implementation 'org.springframework.boot:spring-boot-starter-web:3.2.4'
+    runtimeOnly 'com.mysql:mysql-connector-j:8.3.0'
+}
