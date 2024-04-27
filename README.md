@@ -148,6 +148,7 @@ kubectl exec -it mysql-0 -- mysql -uroot -pKubernetesPassword123
 
 
 **Application deployment:** `deployment_service.yml`
+
 This YAML configuration defines several Kubernetes resources:
 
 1. **Deployment (`pn-deployment`):**
