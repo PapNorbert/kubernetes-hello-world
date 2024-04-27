@@ -31,9 +31,9 @@ spec:
           echo server-id=$((100 + $ordinal)) >> /mnt/conf.d/server-id.cnf
           # Copy appropriate conf.d files from config-map to emptyDir.
           if [[ $ordinal -eq 0 ]]; then
-            cp /mnt/config-map/primary.cnf /mnt/conf.d/
+            cp /mnt/config-map/primary.cnf /docker-entrypoint-initdb.d/
           else
-            cp /mnt/config-map/replica.cnf /mnt/conf.d/
+            cp /mnt/config-map/replica.cnf /docker-entrypoint-initdb.d/
           fi          
         volumeMounts:
         - name: conf
@@ -54,9 +54,9 @@ spec:
           ordinal=${BASH_REMATCH[1]}
           [[ $ordinal -eq 0 ]] && exit 0
           # Clone data from previous peer.
-          ncat --recv-only mysql-$(($ordinal-1)).mysql 3307 | xbstream -x -C /var/lib/mysql
+          ncat --recv-only mysql-$(($ordinal-1)).mysql 3307 --proxy-auth root:KubernetesPassword123 | xbstream -x -C /var/lib/mysql 
           # Prepare the backup.
-          xtrabackup --prepare --target-dir=/var/lib/mysql          
+          xtrabackup --prepare --target-dir=/var/lib/mysql --password=KubernetesPassword123        
         volumeMounts:
         - name: data
           mountPath: /var/lib/mysql
@@ -68,12 +68,12 @@ spec:
         image: mysql:5.7
         env:
         - name: MYSQL_ALLOW_EMPTY_PASSWORD
-          value: "1"
-        # - name: MYSQL_ROOT_PASSWORD
-        #   valueFrom:
-        #     secretKeyRef:
-        #       name: app-secrets
-        #       key: dbPassword
+          value: "0"
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: dbPassword
         ports:
         - name: mysql
           containerPort: 3306
@@ -87,8 +87,8 @@ spec:
           mountPath: /docker-entrypoint-initdb.d
         resources:
           requests:
-            cpu: 500m
-            memory: 1Gi
+            cpu: 250m
+            memory: 500Mi
         livenessProbe:
           exec:
             command: ["mysqladmin", "ping"]
@@ -98,7 +98,7 @@ spec:
         readinessProbe:
           exec:
             # Check we can execute queries over TCP (skip-networking is off).
-            command: ["mysql", "-h", "127.0.0.1", "-e", "SELECT 1"]
+            command: ["mysql", "-h", "127.0.0.1", "-u", "root", "-pKubernetesPassword123","-e", "SELECT 1"]
           initialDelaySeconds: 5
           periodSeconds: 2
           timeoutSeconds: 1
@@ -132,14 +132,14 @@ spec:
           # Check if we need to complete a clone by starting replication.
           if [[ -f change_master_to.sql.in ]]; then
             echo "Waiting for mysqld to be ready (accepting connections)"
-            until mysql -h 127.0.0.1 -e "SELECT 1"; do sleep 1; done
+            until mysql -h 127.0.0.1 -u root -pKubernetesPassword123 -e "SELECT 1"; do sleep 1; done
 
             echo "Initializing replication from clone position"
-            mysql -h 127.0.0.1 \
+            mysql -h 127.0.0.1 -u root -pKubernetesPassword123 \
                   -e "$(<change_master_to.sql.in), \
                           MASTER_HOST='mysql-0.mysql', \
                           MASTER_USER='root', \
-                          MASTER_PASSWORD='', \
+                          MASTER_PASSWORD='KubernetesPassword123', \
                           MASTER_CONNECT_RETRY=10; \
                         START SLAVE;" || exit 1
             # In case of container restart, attempt this at-most-once.
@@ -148,7 +148,7 @@ spec:
 
           # Start a server to send backups when requested by peers.
           exec ncat --listen --keep-open --send-only --max-conns=1 3307 -c \
-            "xtrabackup --backup --slave-info --stream=xbstream --host=127.0.0.1 --user=root"          
+            "xtrabackup --backup --slave-info --stream=xbstream --host=127.0.0.1 --user=root --password=KubernetesPassword123"          
         volumeMounts:
         - name: data
           mountPath: /var/lib/mysql
@@ -175,4 +175,4 @@ spec:
       accessModes: ["ReadWriteOnce"]
       resources:
         requests:
-          storage: 1Gi
+          storage: 500Mi

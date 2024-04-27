@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: kubernetes-hw-container
-          image: micpn.azurecr.io/kuberneteshw:v3
+          image: micpn.azurecr.io/kuberneteshw:v1
           imagePullPolicy: IfNotPresent
           env:
             - name: DB_DRIVER

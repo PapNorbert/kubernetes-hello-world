@@ -18,7 +18,7 @@ public class ConnectionManager {
         try {
             pool = new LinkedList<>();
             Class.forName(Configuration.getDbDriver());
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < POOL_SIZE; i++) {
                 pool.add(
                         DriverManager.getConnection(Configuration.getDbUrl(), Configuration.getDbUser(),
                                 Configuration.getDbPassword())
@@ -39,7 +39,7 @@ public class ConnectionManager {
     }
 
     public synchronized void returnConnection(Connection connection) {
-        if (pool.size() < POOL_SIZE) {
+        if ( connection!= null && pool.size() < POOL_SIZE) {
             pool.add(connection);
         }
     }

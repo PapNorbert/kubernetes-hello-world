@@ -22,11 +22,13 @@ public class MessageController {
 
     @GetMapping()
     public Collection<Message> findAll() {
+        System.out.println("Get request at /db/messages/");
         return messageRepository.findAll();
     }
 
     @GetMapping("/{id}")
     public Message findById(@PathVariable("id") Long id) {
+        System.out.println("Get request at /db/messages/" + id);
         try {
             Message message = messageRepository.findById(id);
             if (message == null) {
@@ -42,6 +44,7 @@ public class MessageController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Long create(@RequestBody String messageText) {
+        System.out.println("Post request at /db/messages, message text: " + messageText);
         Message newMessage = new Message();
         newMessage.setMessage(messageText);
         return messageRepository.save(newMessage).getId();

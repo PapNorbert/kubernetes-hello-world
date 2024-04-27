@@ -2,7 +2,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: pn-ingress
-
+  labels:
+    owner: pn
 spec:
   ingressClassName: webapprouting.kubernetes.azure.com
   rules:

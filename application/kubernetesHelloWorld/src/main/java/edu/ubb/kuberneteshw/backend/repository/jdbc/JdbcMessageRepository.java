@@ -2,8 +2,8 @@ package edu.ubb.kuberneteshw.backend.repository.jdbc;
 
 import edu.ubb.kuberneteshw.backend.model.Message;
 import edu.ubb.kuberneteshw.backend.repository.MessageRepository;
-import edu.ubb.kuberneteshw.backend.repository.exception.RepositoryNotFoundException;
 import edu.ubb.kuberneteshw.backend.repository.exception.RepositoryException;
+import edu.ubb.kuberneteshw.backend.repository.exception.RepositoryNotFoundException;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
@@ -24,7 +24,9 @@ public class JdbcMessageRepository implements MessageRepository {
         String query = "INSERT INTO messages "
                 + " (id, message) VALUES"
                 + " (default, ?)";
-        try (Connection connection = ConnectionManager.getInstance().getConnection()) {
+        Connection connection = null;
+        try {
+            connection = connectionManager.getConnection();
             PreparedStatement stmt = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
             stmt.setString(1, message.getMessage());
 
@@ -36,6 +38,8 @@ public class JdbcMessageRepository implements MessageRepository {
             return message;
         } catch (SQLException e) {
             throw new RepositoryException("Error inserting message", e);
+        } finally {
+            connectionManager.returnConnection(connection);
         }
 
     }
@@ -44,7 +48,9 @@ public class JdbcMessageRepository implements MessageRepository {
     public Message findById(Long id) {
         String query = "SELECT id, message FROM messages "
                 + "WHERE id = ?";
-        try (Connection connection = connectionManager.getConnection()) {
+        Connection connection = null;
+        try {
+            connection = connectionManager.getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
             stmt.setLong(1, id);
             ResultSet result = stmt.executeQuery();
@@ -57,13 +63,17 @@ public class JdbcMessageRepository implements MessageRepository {
             return null;
         } catch (SQLException e) {
             throw new RepositoryNotFoundException("Failed to get message with id" + id, e);
+        } finally {
+            connectionManager.returnConnection(connection);
         }
     }
 
     @Override
     public Collection<Message> findAll() {
         String query = "SELECT id, message FROM messages ";
-        try (Connection connection = connectionManager.getConnection()) {
+        Connection connection = null;
+        try {
+            connection = connectionManager.getConnection();
             PreparedStatement stmt = connection.prepareStatement(query);
             ResultSet result = stmt.executeQuery();
 
@@ -77,6 +87,8 @@ public class JdbcMessageRepository implements MessageRepository {
             return messages;
         } catch (SQLException e) {
             throw new RepositoryNotFoundException("Failed to get all messages", e);
+        } finally {
+            connectionManager.returnConnection(connection);
         }
     }
 

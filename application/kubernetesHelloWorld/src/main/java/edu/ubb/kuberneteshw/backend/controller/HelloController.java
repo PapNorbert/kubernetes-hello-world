@@ -13,6 +13,7 @@ public class HelloController {
 
     @GetMapping()
     public String getMessage() {
+        System.out.println("Get request at /hello" );
         return "Hello World! This is a demo application version 1";
     }
 }
